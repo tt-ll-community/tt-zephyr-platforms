@@ -8,7 +8,7 @@
 #include <st/g0/stm32g0b1Xe.dtsi>
 #include <st/g0/stm32g0b1v(b-c-e)ix-pinctrl.dtsi>
 
-#include "tt_blackhole_base.dtsi"
+#include "tt_blackhole_dmc.dtsi"
 
 /* These two I/O have external pull-ups to 1.8V */
 &i2c1_scl_pa9 {
