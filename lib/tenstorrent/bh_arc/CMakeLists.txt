@@ -60,11 +60,11 @@ if(CONFIG_ARC)
 endif()
 
 
-set(PROTOC ${PROTOBUF_PROTOC_EXECUTABLE})
-set(SPIROM_PROTOBUFS ${ZEPHYR_CURRENT_MODULE_DIR}/lib/tenstorrent/bh_arc/spirom_protobufs)
-
 list(APPEND CMAKE_MODULE_PATH ${ZEPHYR_BASE}/modules/nanopb)
 include(nanopb)
+
+set(PROTOC ${PROTOBUF_PROTOC_EXECUTABLE})
+set(SPIROM_PROTOBUFS ${ZEPHYR_CURRENT_MODULE_DIR}/lib/tenstorrent/bh_arc/spirom_protobufs)
 
 message(STATUS "Generating Python files from protobufs")
 set(OUTPUT_DIR ${ZEPHYR_BINARY_DIR}/python_proto_files)
