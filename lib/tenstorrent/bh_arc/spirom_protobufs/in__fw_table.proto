@@ -7,8 +7,13 @@
 syntax = "proto3";
 
 #if NANOPB
-import "nanopb.proto";
+  import "nanopb.proto";
+
+# define MAX_SIZE(sz) [(nanopb).max_size = sz]
+#else
+# define MAX_SIZE(sz) /* max size: sz */
 #endif
+
 
 message FwTable {
 
@@ -114,16 +119,10 @@ message FwTable {
 
 
     uint32 asic_start = 2;
-    bytes  asic_values = 3 
-#if NANOPB
-        [(nanopb).max_size = 64];
-#endif
+    bytes  asic_values = 3 MAX_SIZE(64);
 
 
     uint32 gddr_start = 4;
-    bytes  gddr_values = 5 
-#if NANOPB
-        [(nanopb).max_size =  64];
-#endif
+    bytes  gddr_values = 5 MAX_SIZE(64);
   }
 }
