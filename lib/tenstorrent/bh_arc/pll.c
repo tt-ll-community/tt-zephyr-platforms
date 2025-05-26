@@ -224,10 +224,10 @@ static const PLLSettings kPLLInitialSettings[PLL_COUNT] = {
 	{.pll_cntl_1 = {.f.refdiv = 2, .f.postdiv = 0, .f.fbdiv = 64}, /* 1600 MHz */
 	 .pll_cntl_2 = {.f.ctrl_bus1 = 0x18}, /* FOUT4PHASEEN, FOUTPOSTDIVEN bits asserted */
 	 .pll_cntl_3 = {.f.ctrl_bus5 = 1},
-	 .pll_cntl_5 = {.f.postdiv0 = 1,  /* L2CPUCLK0 - 800 MHz */
-			.f.postdiv1 = 1,  /* L2CPUCLK1 - 800 MHz */
-			.f.postdiv2 = 1,  /* L2CPUCLK2 - 800 MHz */
-			.f.postdiv3 = 1}, /* L2CPUCLK3 - 800 MHz */
+	 .pll_cntl_5 = {.f.postdiv0 = 4,  /* L2CPUCLK0 - 200 MHz */
+			.f.postdiv1 = 4,  /* L2CPUCLK1 - 200 MHz */
+			.f.postdiv2 = 4,  /* L2CPUCLK2 - 200 MHz */
+			.f.postdiv3 = 4}, /* L2CPUCLK3 - 200 MHz */
 	 .use_postdiv = {.f.pll_use_postdiv0 = 1,
 			 .f.pll_use_postdiv1 = 1,
 			 .f.pll_use_postdiv2 = 1,
