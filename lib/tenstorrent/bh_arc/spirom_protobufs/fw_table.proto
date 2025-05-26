@@ -6,18 +6,25 @@
 
 syntax = "proto3";
 
+import "nanopb.proto";
+
 message FwTable {
 
   uint32 fw_bundle_version = 1;
   ChipLimits chip_limits = 2;
   FeatureEnable feature_enable = 3;
-  FanTable fan_table = 4;
+  FanTable fan_table = 4 [deprecated = true];
   DramTable dram_table = 5;
   ChipHarvestingTable chip_harvesting_table = 6;
   PciPropertyTable pci0_property_table = 7;
   PciPropertyTable pci1_property_table = 8;
   EthPropertyTable eth_property_table = 9;
   ProductSpecHarvesting product_spec_harvesting = 10;
+  // for when TT adds new stuff
+  reserved 11 to 13;
+  // added in community fork
+  // if this is not specified, it will use the default fan curve from the official firmware
+  optional FanCurve fan_curve = 14;
 
   message ChipLimits {
     uint32 asic_fmax = 1;
@@ -47,6 +54,7 @@ message FwTable {
     bool fan_ctrl_en = 8;
   }
 
+  // IGNORED
   message FanTable{
     uint32 fan_table_point_x1 = 1;
     uint32 fan_table_point_x2 = 2;
@@ -89,5 +97,23 @@ message FwTable {
     uint32 dram_disable_count = 1;
     bool eth_disabled = 2;
     uint32 tensix_col_disable_count = 3;
+  }
+
+  // for both asic and dram:
+  //   each byte contains fan speed in percent (configurable via [temp_per_entry]).
+  //   to get the temperature, the firmware does something like:  values[round((temp - start) / temp_per_entry)]
+  //   for temperatures that are out of bounds of the values array, it will use either the closest value.
+  //
+  // temperature in degrees celcius (°C)
+  //
+  // it updates the fan curve every second
+  message FanCurve {
+    uint32 temp_per_entry = 1;
+
+    uint32 asic_start = 2;
+    bytes  asic_values = 3 [(nanopb).max_size = 64];
+
+    uint32 dram_start = 4;
+    bytes  dram_values = 5 [(nanopb).max_size =  64];
   }
 }
