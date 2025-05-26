@@ -38,33 +38,75 @@ float max_gddr_temp;
 float max_asic_temp;
 float alpha = CONFIG_TT_BH_ARC_FAN_CTRL_ALPHA / 100.0f;
 
+static uint32_t fan_speed_for_curve(uint32_t index, uint32_t start, char const* values, uint32_t values_len)
+{
+    if (values_len == 0) {
+        return 100;
+    }
+
+    if (index < start) {
+        return values[0];
+    }
+
+    index -= start;
+
+    if (index >= values_len) {
+        return values[values_len - 1];
+    }
+
+    uint32_t speed = (uint32_t) values[index];
+    if (speed > 100) {
+        return 100;
+    }
+    return speed;
+}
+
 STATIC uint32_t fan_curve(float max_asic_temp, float max_gddr_temp)
 {
-	/* P150 fan curve: could be a part of device tree once added to the driver model */
-	uint32_t fan_speed1;
-	uint32_t fan_speed2;
+    const FwTable *const fw_table = get_fw_table();
+    if (fw_table->has_fan_curve) {
+        // TODO: should round instead?
 
-	if (max_asic_temp < 49) {
-		fan_speed1 = 35;
-	} else if (max_asic_temp < 90) {
-		fan_speed1 =
-			(uint32_t)(0.03867f * (max_asic_temp - 49.0f) * (max_asic_temp - 49.0f)) +
-			35;
-	} else {
-		fan_speed1 = 100;
-	}
+#define CURVE_COMPONENT(x) \
+        uint32_t x##_speed = fan_speed_for_curve( \
+                (uint32_t) ( max_##x##_temp / (float) fw_table->fan_curve.temp_per_entry ), \
+                fw_table->fan_curve.x##_start,        \
+                fw_table->fan_curve.x##_values.bytes, \
+                fw_table->fan_curve.x##_values.size);
 
-	if (max_gddr_temp < 43) {
-		fan_speed2 = 35;
-	} else if (max_gddr_temp < 82) {
-		fan_speed2 =
-			(uint32_t)(0.04274f * (max_gddr_temp - 43.0f) * (max_gddr_temp - 43.0f)) +
-			35;
-	} else {
-		fan_speed2 = 100;
-	}
+        CURVE_COMPONENT(asic);
+        CURVE_COMPONENT(gddr);
 
-	return MAX(fan_speed1, fan_speed2);
+#undef CURVE_COMPONENT
+
+        return MAX(asic_speed, gddr_speed);
+    } else {
+        /* P150 fan curve: could be a part of device tree once added to the driver model */
+        uint32_t fan_speed1;
+        uint32_t fan_speed2;
+
+        if (max_asic_temp < 49) {
+            fan_speed1 = 35;
+        } else if (max_asic_temp < 90) {
+            fan_speed1 =
+                (uint32_t)(0.03867f * (max_asic_temp - 49.0f) * (max_asic_temp - 49.0f)) +
+                35;
+        } else {
+            fan_speed1 = 100;
+        }
+
+        if (max_gddr_temp < 43) {
+            fan_speed2 = 35;
+        } else if (max_gddr_temp < 82) {
+            fan_speed2 =
+                (uint32_t)(0.04274f * (max_gddr_temp - 43.0f) * (max_gddr_temp - 43.0f)) +
+                35;
+        } else {
+            fan_speed2 = 100;
+        }
+
+        return MAX(fan_speed1, fan_speed2);
+    }
 }
 
 static void update_fan_speed(void)
