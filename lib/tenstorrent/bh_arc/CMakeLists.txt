@@ -3,6 +3,7 @@
 zephyr_library_named(bh_arc)
 zephyr_include_directories(.)
 zephyr_include_directories(${ZEPHYR_CURRENT_MODULE_DIR}/include)
+
 zephyr_library_sources_ifndef(
   CONFIG_TT_SMC_RECOVERY
   aiclk_ppm.c
@@ -58,23 +59,37 @@ if(CONFIG_ARC)
   zephyr_library_link_libraries(${ZEPHYR_CURRENT_MODULE_DIR}/zephyr/blobs/tt_blackhole_libpciesd.a)
 endif()
 
-list(APPEND CMAKE_MODULE_PATH ${ZEPHYR_BASE}/modules/nanopb)
-include(nanopb)
-zephyr_nanopb_sources(bh_arc spirom_protobufs/fw_table.proto)
-zephyr_nanopb_sources(bh_arc spirom_protobufs/read_only.proto)
-zephyr_nanopb_sources(bh_arc spirom_protobufs/flash_info.proto)
 
 set(PROTOC ${PROTOBUF_PROTOC_EXECUTABLE})
 set(SPIROM_PROTOBUFS ${ZEPHYR_CURRENT_MODULE_DIR}/lib/tenstorrent/bh_arc/spirom_protobufs)
 
+list(APPEND CMAKE_MODULE_PATH ${ZEPHYR_BASE}/modules/nanopb)
+include(nanopb)
+
+include(${ZEPHYR_CURRENT_MODULE_DIR}/cmake/cpp.cmake)
 message(STATUS "Generating Python files from protobufs")
 set(OUTPUT_DIR ${ZEPHYR_BINARY_DIR}/python_proto_files)
 file(MAKE_DIRECTORY ${OUTPUT_DIR})
-set_property(GLOBAL APPEND PROPERTY extra_post_build_commands
-	COMMAND ${PROTOC} --python_out=${OUTPUT_DIR} ${SPIROM_PROTOBUFS}/fw_table.proto -I ${SPIROM_PROTOBUFS}
-	COMMAND ${PROTOC} --python_out=${OUTPUT_DIR} ${SPIROM_PROTOBUFS}/read_only.proto -I ${SPIROM_PROTOBUFS}
-	COMMAND ${PROTOC} --python_out=${OUTPUT_DIR} ${SPIROM_PROTOBUFS}/flash_info.proto -I ${SPIROM_PROTOBUFS}
-)
+
+foreach(PROTO fw_table.proto read_only.proto flash_info.proto)
+    add_preprocessed_file(nanopb__${PROTO}
+        INPUT    "${SPIROM_PROTOBUFS}/in__${PROTO}"
+        OUTPUT   "${SPIROM_PROTOBUFS}/${PROTO}"
+        FLAGS    "-DNANOPB=1"
+    )
+    add_preprocessed_file(min__${PROTO}
+        INPUT    "${SPIROM_PROTOBUFS}/in__${PROTO}"
+        OUTPUT   "${CMAKE_BINARY_DIR}/pb_min${PROTO}"
+        FLAGS    "-DNANOPB=0"
+    )
+
+    zephyr_nanopb_sources(bh_arc "${SPIROM_PROTOBUFS}/${PROTO}")
+
+    set_property(GLOBAL APPEND PROPERTY extra_post_build_commands
+        COMMAND ${PROTOC} --python_out=${OUTPUT_DIR} "${CMAKE_BINARY_DIR}/pb_min${PROTO}" -I "${CMAKE_BINARY_DIR}"
+    )
+endforeach(PROTO)
+
 
 if(NOT DEFINED CONFIG_TT_SMC_RECOVERY)
 	if(BOARD STREQUAL "tt_blackhole")
