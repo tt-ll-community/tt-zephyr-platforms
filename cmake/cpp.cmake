@@ -4,7 +4,7 @@
 # Function: add_preprocessed_file
 #
 # Usage:
-#   add_preprocessed_file(<target-name>
+#   add_preprocessed_file(
 #     INPUT    <in-file>
 #     OUTPUT   <out-file>
 #     [COMPILER <path-to-cc>]
@@ -12,7 +12,7 @@
 #     [FLAGS    <extra-flags>]
 #   )
 # ------------------------------------------------------------------------
-function(add_preprocessed_file name)
+function(add_preprocessed_file)
   cmake_parse_arguments(PPF "" "COMPILER;INPUT;OUTPUT;FLAGS" "INCLUDES" ${ARGN})
 
   # pick compiler

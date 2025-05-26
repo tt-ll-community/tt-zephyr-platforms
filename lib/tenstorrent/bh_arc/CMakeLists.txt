@@ -72,21 +72,22 @@ set(OUTPUT_DIR ${ZEPHYR_BINARY_DIR}/python_proto_files)
 file(MAKE_DIRECTORY ${OUTPUT_DIR})
 
 foreach(PROTO fw_table.proto read_only.proto flash_info.proto)
-    add_preprocessed_file(nanopb__${PROTO}
+    add_preprocessed_file(
         INPUT    "${SPIROM_PROTOBUFS}/in__${PROTO}"
         OUTPUT   "${SPIROM_PROTOBUFS}/${PROTO}"
         FLAGS    "-DNANOPB=1"
     )
-    add_preprocessed_file(min__${PROTO}
+    add_preprocessed_file(
         INPUT    "${SPIROM_PROTOBUFS}/in__${PROTO}"
-        OUTPUT   "${CMAKE_BINARY_DIR}/pb_min${PROTO}"
+        OUTPUT   "${CMAKE_BINARY_DIR}/pb_min__${PROTO}"
         FLAGS    "-DNANOPB=0"
     )
 
     zephyr_nanopb_sources(bh_arc "${SPIROM_PROTOBUFS}/${PROTO}")
 
     set_property(GLOBAL APPEND PROPERTY extra_post_build_commands
-        COMMAND ${PROTOC} --python_out=${OUTPUT_DIR} "${CMAKE_BINARY_DIR}/pb_min${PROTO}" -I "${CMAKE_BINARY_DIR}"
+        COMMAND ${PROTOC} --python_out=${OUTPUT_DIR} "${CMAKE_BINARY_DIR}/pb_min__${PROTO}" -I "${CMAKE_BINARY_DIR}"
+        DEPENDS "${CMAKE_BINARY_DIR}/pb_min__${PROTO}" "${CMAKE_BINARY_DIR}/pb_min__${PROTO}"
     )
 endforeach(PROTO)
 
