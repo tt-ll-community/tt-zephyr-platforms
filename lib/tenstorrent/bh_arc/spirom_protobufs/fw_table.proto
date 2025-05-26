@@ -113,7 +113,7 @@ message FwTable {
     uint32 asic_start = 2;
     bytes  asic_values = 3 [(nanopb).max_size = 64];
 
-    uint32 dram_start = 4;
-    bytes  dram_values = 5 [(nanopb).max_size =  64];
+    uint32 gddr_start = 4;
+    bytes  gddr_values = 5 [(nanopb).max_size =  64];
   }
 }
