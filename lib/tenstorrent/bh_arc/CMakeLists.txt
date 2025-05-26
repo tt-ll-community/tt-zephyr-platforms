@@ -66,28 +66,24 @@ set(SPIROM_PROTOBUFS ${ZEPHYR_CURRENT_MODULE_DIR}/lib/tenstorrent/bh_arc/spirom_
 list(APPEND CMAKE_MODULE_PATH ${ZEPHYR_BASE}/modules/nanopb)
 include(nanopb)
 
-include(${ZEPHYR_CURRENT_MODULE_DIR}/cmake/cpp.cmake)
 message(STATUS "Generating Python files from protobufs")
 set(OUTPUT_DIR ${ZEPHYR_BINARY_DIR}/python_proto_files)
 file(MAKE_DIRECTORY ${OUTPUT_DIR})
 
 foreach(PROTO fw_table.proto read_only.proto flash_info.proto)
-    add_preprocessed_file(
-        INPUT    "${SPIROM_PROTOBUFS}/in__${PROTO}"
-        OUTPUT   "${SPIROM_PROTOBUFS}/${PROTO}"
-        FLAGS    "-DNANOPB=1"
-    )
-    add_preprocessed_file(
-        INPUT    "${SPIROM_PROTOBUFS}/in__${PROTO}"
-        OUTPUT   "${CMAKE_BINARY_DIR}/pb_min__${PROTO}"
-        FLAGS    "-DNANOPB=0"
+    add_custom_command(
+        OUTPUT      "${SPIROM_PROTOBUFS}/${PROTO}"
+        COMMAND     ${CMAKE_C_COMPILER} -xc -E -P "-DNANOPB=1" "${SPIROM_PROTOBUFS}/in__${PROTO}" -o "${SPIROM_PROTOBUFS}/${PROTO}"
+        DEPENDS     "${SPIROM_PROTOBUFS}/in__${PROTO}"
+        COMMENT     "Preprocessing ${PPF_INPUT} → ${PPF_OUTPUT}"
+        VERBATIM
     )
 
     zephyr_nanopb_sources(bh_arc "${SPIROM_PROTOBUFS}/${PROTO}")
 
     set_property(GLOBAL APPEND PROPERTY extra_post_build_commands
+        COMMAND ${CMAKE_C_COMPILER} -xc -E -P "-DNANOPB=0" "${SPIROM_PROTOBUFS}/in__${PROTO}" -o "${CMAKE_BINARY_DIR}/pb_min__${PROTO}"
         COMMAND ${PROTOC} --python_out=${OUTPUT_DIR} "${CMAKE_BINARY_DIR}/pb_min__${PROTO}" -I "${CMAKE_BINARY_DIR}"
-        DEPENDS "${CMAKE_BINARY_DIR}/pb_min__${PROTO}" "${CMAKE_BINARY_DIR}/pb_min__${PROTO}"
     )
 endforeach(PROTO)
 
